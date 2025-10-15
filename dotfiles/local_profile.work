@@ -1,0 +1,153 @@
+
+typeset -l myhostname=$(hostname)
+set -o vi
+set -k
+export TERM=xterm
+
+setopt nobanghist # Stop zsh from interpreting ! has hist command
+
+export me=$USERNAME
+export where_am_i=$(hostname)
+
+export PROMPT='
+%/ 
+%n@laptop:> '
+
+#zsh customizations
+export VISUAL=vim
+autoload edit-command-line; zle -N edit-command-line
+bindkey -M vicmd v edit-command-line
+
+# Multi-Line History
+#shopt -s lithist # not required for zsh
+
+# Function to set window title 
+function title {
+[[ $# != 1 ]] && echo "Please supply a window name" && return 1
+printf '\e]2;%s\a' "$1"
+}
+
+# Function to monitor ping and ssh status of a server
+
+function cn  {
+        server=$1
+        [[ -z $server ]] && echo "Please supply a hostname" && return 1
+        ssh d496869a@${server}
+}
+
+function ck_server {
+host=$1
+while true
+do
+ssh -n -q d496869a@$host -o BatchMode=yes -o ConnectTimeout=1 who 1>/dev/null 2>/dev/null
+ ret=$?
+  if [[ $ret == 0 ]]
+  then
+          ssh_stat="ssh: OK"
+  else
+         ssh_stat="ssh: ERROR"
+  fi
+ping -c1 -t1 $host 1>/dev/null 2>/dev/null
+ ret=$?
+  if [[ $ret == 0 ]]
+  then
+          ping_stat="ping: OK"
+  else
+         ping_stat="ping: ERROR"
+  fi
+echo $(date +%m-%d\|%H:%M:%S) $ping_stat $ssh_stat
+sleep 10
+done
+}
+
+function lc {
+for i in $@
+do
+  typeset -l l_string=$i
+  echo $l_string
+  echo -n $l_string  | pbcopy
+done
+}
+
+# Changes directory to this weeks wip folder. 
+# If the directory doesn't exist it creates.
+function cdg {
+if [[ $(date "+%A") == Monday ]] 
+then
+  my_date=$(date "+%-m-%-d-%Y")
+  short_date=$(date "+%m%d%Y")
+else
+  #wip_dir=~/wip/$(date -v-monday "+%-m-%-d-%Y")
+  my_date=$(date -v-monday "+%-m-%-d-%Y")
+  short_date=$(date -v-monday "+%m%d%Y")
+fi
+wip_dir=~/wip/$my_date
+notes_file=$wip_dir/notes_${short_date}.txt
+if [[ ! -d $wip_dir ]]
+then
+  echo "$wip_dir not found.  Creating."
+  mkdir $wip_dir
+  figlet "Notes: ${short_date}" > ${notes_file}
+fi
+cd $wip_dir
+}
+
+function cget {
+my_user=${USER}a
+server=$1
+file=$2
+dest=$3
+/usr/bin/scp ${my_user}@${server}:${file} ${dest}
+}
+
+function cput {
+my_user=${USER}a
+server=$2
+file=$1
+dest=$3
+/usr/bin/scp ${file} ${my_user}@${server}:${dest}
+}
+
+alias con="python3 ~/bin/conn.py"
+#alias ts="python3 ~/bin/ts.py"
+alias tsnonprod="python3 ~/bin/ts.py ~/bin/troubleshooting_serversNONPROD.csv"
+alias tsprod="python3 ~/bin/ts.py ~/bin/troubleshooting_serversPROD.csv"
+#alias ts="python3 ~/bin/ts.py"
+alias lookup="~/bin/lookup.py"
+alias cdgit='cd ~/Documents/GitHub/ARS_LABIMG/'
+alias scp="noglob scp"
+
+# ssh aliases
+#ProdNC
+alias ap999="ssh -q d496869a@nzxpap999.nndc.kp.org"
+alias ap1000="ssh -q d496869a@nzxpap1000.nndc.kp.org"
+alias ap1001="ssh -q d496869a@nzxpap1001.nndc.kp.org"
+alias ap1002="ssh -q d496869a@nzxpap1002.nndc.kp.org"
+alias ap1003="ssh -q d496869a@nzxpap1003.nndc.kp.org"
+alias ap1004="ssh -q d496869a@nzxpap1004.nndc.kp.org"
+alias db497="ssh -q d496869a@nzxpdb497.nndc.kp.org"
+alias db498="ssh -q d496869a@nzxpdb498.nndc.kp.org"
+
+#Non Prod
+alias ap115="ssh -q d496869a@nzxbap115.nndc.kp.org"
+alias ap116="ssh -q d496869a@nzxbap116.nndc.kp.org"
+alias db17="ssh -q d496869a@nzxbdb17.nndc.kp.org"
+alias db18="ssh -q d496869a@nzxbdb18.nndc.kp.org"
+alias db71="ssh -q d496869a@szxddb71.ssdc.kp.org"
+alias db72="ssh -q d496869a@szxddb72.ssdc.kp.org"
+alias ap1823="ssh -q d496869a@csc2cxn00001823.cloud.kp.org"
+alias ap1824="ssh -q d496869a@csc2cxn00001824.cloud.kp.org"
+alias ap1614="ssh -q d496869a@csc2cxn00001614.cloud.kp.org"
+alias ap1615="ssh -q d496869a@csc2cxn00001615.cloud.kp.org"
+
+# DR
+alias db11="ssh -q d496869a@szxxdb11.ssdc.kp.org"
+alias xap16="ssh -q d496869a@szxxap16.ssdc.kp.org"
+alias xap17="ssh -q d496869a@szxxap17.ssdc.kp.org"
+alias xap18="ssh -q d496869a@szxxap18.ssdc.kp.org"
+alias xap19="ssh -q d496869a@szxxap19.ssdc.kp.org"
+
+# Other servers
+alias 1181="ssh -q d496869a@cskpcloudxp1181.cloud.kp.org"
+
+eval $(fzf --zsh)

@@ -1,22 +1,7 @@
 Notes:
 
-dnf config-manager --set-enabled highavailability
-dnf install -y passwd iputils iproute procps-ng util-linux net-tools
-dnf install -y pacemaker corosync pcs fence-agents-all
-
-# Authenticate nodes
-pcs host auth centos-node1 centos-node2 -u hacluster -p abc123
-
-# Create cluster
-pcs cluster setup mycluster centos-node1 centos-node2
-
-# Start cluster
-pcs cluster start --all
-
-################ After changes:
-
 #Start containers
-cd /Users/hjhayes3/Documents/docker/rhel_clustering
+cd /Users/hjhayes3/Documents/GitHub/Personal/docker/rhel_clustering
 docker-compose up -d
 
 # Monitor Logs
@@ -31,16 +16,19 @@ echo "abc123" | passwd --stdin hacluster
 
 systemctl status pcsd
 # if not running:
-systemctl start pcsd
-systemctl enable pcsd
+systemctl start pcsd ;  systemctl enable pcsd
 
-# Then authenticate and set up the cluster
+# Monitor cluster status
+watch -d -n2 pcs status
+
+# All subsequent commands from node 1
+# Then authenticate and set up the cluster 
 pcs host auth centos-node1 centos-node2 -u hacluster -p abc123
 
-# Create cluster
+# Create cluster 
 pcs cluster setup mycluster centos-node1 centos-node2 --force
 
-# Start cluster
+# Start cluster 
 pcs cluster start --all
 
 # Disable Stonith to prevent errors in pcs status
