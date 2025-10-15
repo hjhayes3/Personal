@@ -1,0 +1,14 @@
+../../
+../../.DS_Store
+../../rhel_clustering
+../../rhel_clustering/docker-compose.yml.2
+../../rhel_clustering/notes.txt
+../../rhel_clustering/docker.compose.yml.1
+../../rhel_clustering/docker-compose.yml
+../../claude
+../../claude/Dockerfile.txt
+../../claude/notes.txt
+../../claude/data
+../../claude/data/textfile.txt
+../../ubuntu-test
+../../ubuntu-test/Dockerfile

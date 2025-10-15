@@ -1,0 +1,59 @@
+version: '3.8'
+
+services:
+  centos-node1:
+    image: quay.io/centos/centos:stream9
+    container_name: centos-node1
+    hostname: centos-node1
+    privileged: true
+    networks:
+      cluster-net:
+        ipv4_address: 172.28.0.11
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
+      - node1-data:/var/lib/pacemaker
+    tmpfs:
+      - /run
+      - /tmp
+    entrypoint: ["/bin/bash", "-c"]
+    command: 
+      - |
+        if [ ! -f /usr/sbin/init ]; then
+          dnf install -y systemd
+        fi
+        exec /usr/sbin/init
+    restart: unless-stopped
+
+  centos-node2:
+    image: quay.io/centos/centos:stream9
+    container_name: centos-node2
+    hostname: centos-node2
+    privileged: true
+    networks:
+      cluster-net:
+        ipv4_address: 172.28.0.12
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
+      - node2-data:/var/lib/pacemaker
+    tmpfs:
+      - /run
+      - /tmp
+    entrypoint: ["/bin/bash", "-c"]
+    command: 
+      - |
+        if [ ! -f /usr/sbin/init ]; then
+          dnf install -y systemd
+        fi
+        exec /usr/sbin/init
+    restart: unless-stopped
+
+networks:
+  cluster-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16
+
+volumes:
+  node1-data:
+  node2-data:

@@ -1,0 +1,75 @@
+Notes:
+
+dnf config-manager --set-enabled highavailability
+dnf install -y passwd iputils iproute procps-ng util-linux net-tools
+dnf install -y pacemaker corosync pcs fence-agents-all
+
+# Authenticate nodes
+pcs host auth centos-node1 centos-node2 -u hacluster -p abc123
+
+# Create cluster
+pcs cluster setup mycluster centos-node1 centos-node2
+
+# Start cluster
+pcs cluster start --all
+
+################ After changes:
+
+#Start containers
+cd /Users/hjhayes3/Documents/docker/rhel_clustering
+docker-compose up -d
+
+# Monitor Logs
+docker-compose logs -f centos-node1
+docker-compose logs -f centos-node2
+
+docker exec -it centos-node1 bash
+docker exec -it centos-node2 bash
+
+# Set hacluster password on both nodes
+echo "abc123" | passwd --stdin hacluster
+
+systemctl status pcsd
+# if not running:
+systemctl start pcsd
+systemctl enable pcsd
+
+# Then authenticate and set up the cluster
+pcs host auth centos-node1 centos-node2 -u hacluster -p abc123
+
+# Create cluster
+pcs cluster setup mycluster centos-node1 centos-node2 --force
+
+# Start cluster
+pcs cluster start --all
+
+# Disable Stonith to prevent errors in pcs status
+pcs property set stonith-enabled=false
+
+Test Resource:
+pcs resource create ClusterIP ocf:heartbeat:IPaddr2 \
+    ip=172.28.0.100 cidr_netmask=16 \
+    op monitor interval=30s
+    
+Validate it's configured:
+ip addr show eth0
+
+# Move to node2
+pcs resource move ClusterIP centos-node2
+pcs resource clear ClusterIP
+
+# Move back to node1
+pcs resource move ClusterIP centos-node1
+pcs resource clear ClusterIP
+
+# Put a node in standby (simulates failure)
+pcs node standby centos-node1
+
+# Resources automatically move to node2
+pcs status
+
+# Bring node back online
+pcs node unstandby centos-node1
+
+# Stop containers
+docker-compose down
